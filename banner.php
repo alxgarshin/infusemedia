@@ -90,6 +90,6 @@ abstract class FunctionsPage
             $page_url = $_SERVER['HTTP_REFERER'];
         }
 
-        return htmlspecialchars($page_url);
+        return filter_var($page_url, FILTER_SANITIZE_URL);
     }
 }
