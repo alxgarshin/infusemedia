@@ -1,4 +1,8 @@
 <?php
+ini_set("log_errors", 1);
+ini_set("display_errors", false);
+error_reporting(E_ERROR | E_WARNING | E_PARSE | E_RECOVERABLE_ERROR);
+
 # Подключаем данные для БД
 include_once("db.php");
 
@@ -54,7 +58,7 @@ abstract class FunctionsUser
             $user_agent = $_SERVER['HTTP_USER_AGENT'];
         }
 
-        return $user_agent;
+        return htmlspecialchars($user_agent);
     }
 
     /**
@@ -70,7 +74,7 @@ abstract class FunctionsUser
             $ip = $_SERVER['REMOTE_ADDR'];
         }
 
-        return $ip;
+        return htmlspecialchars($ip);
     }
 }
 
@@ -86,6 +90,6 @@ abstract class FunctionsPage
             $page_url = $_SERVER['HTTP_REFERER'];
         }
 
-        return $page_url;
+        return htmlspecialchars($page_url);
     }
 }
