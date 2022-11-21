@@ -40,7 +40,7 @@ header("Content-Length: " . filesize($fname));
 fpassthru($fp);
 exit;
 
-class FunctionsUser
+abstract class FunctionsUser
 {
     /**
      * Получение user agent пользователя
@@ -74,7 +74,7 @@ class FunctionsUser
     }
 }
 
-class FunctionsPage
+abstract class FunctionsPage
 {
     /**
      * Получение страницы, с которой пришло обращение
