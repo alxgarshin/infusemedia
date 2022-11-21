@@ -7,18 +7,6 @@ $dbConnection = new PDO('mysql:dbname=' . dbName . ';host=' . dbHost . ';charset
 $dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
 $dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-$user_agent = '';
-if (isset($_SERVER['HTTP_SEC_CH_UA'])) {
-    $user_agent = $_SERVER['HTTP_SEC_CH_UA'];
-} elseif (isset($_SERVER['HTTP_USER_AGENT'])) {
-    $user_agent = $_SERVER['HTTP_USER_AGENT'];
-}
-
-$page_url = '';
-if (isset($_SERVER['HTTP_REFERER'])) {
-    $page_url = $_SERVER['HTTP_REFERER'];
-}
-
 $stmt = $dbConnection->prepare('INSERT INTO
     infuse
     (
@@ -40,8 +28,8 @@ $stmt = $dbConnection->prepare('INSERT INTO
         views_count=views_count+1');
 $stmt->execute([
     'ip_address' => FunctionsUser::getRealIp(),
-    'user_agent' => $user_agent,
-    'page_url' => $page_url
+    'user_agent' => FunctionsUser::getUserAgent(),
+    'page_url' => FunctionsPage::getPage()
 ]);
 
 # Выдаем изображение
@@ -54,6 +42,21 @@ exit;
 
 class FunctionsUser
 {
+    /**
+     * Получение user agent пользователя
+     */
+    public static function getUserAgent(): string
+    {
+        $user_agent = '';
+        if (isset($_SERVER['HTTP_SEC_CH_UA'])) {
+            $user_agent = $_SERVER['HTTP_SEC_CH_UA'];
+        } elseif (isset($_SERVER['HTTP_USER_AGENT'])) {
+            $user_agent = $_SERVER['HTTP_USER_AGENT'];
+        }
+
+        return $user_agent;
+    }
+
     /**
      * Получение "реального" IP пользователя
      */
@@ -68,5 +71,21 @@ class FunctionsUser
         }
 
         return $ip;
+    }
+}
+
+class FunctionsPage
+{
+    /**
+     * Получение страницы, с которой пришло обращение
+     */
+    public static function getPage(): string
+    {
+        $page_url = '';
+        if (isset($_SERVER['HTTP_REFERER'])) {
+            $page_url = $_SERVER['HTTP_REFERER'];
+        }
+
+        return $page_url;
     }
 }
