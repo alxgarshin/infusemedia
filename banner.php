@@ -31,8 +31,8 @@ $dbConnection->execute(
         view_date=NOW(),
         views_count=views_count+1',
     [
-        ['ip_address', FunctionsUser::getRealIp(), 'string'],
-        ['user_agent', FunctionsUser::getUserAgent(), 'string'],
+        ['ip_address', FunctionsUser::getRealIp()],
+        ['user_agent', FunctionsUser::getUserAgent()],
         ['page_url', FunctionsPage::getPage(), 'url']
     ]
 );
@@ -126,10 +126,10 @@ class FunctionsDB
             $key = $data_block[0];
             $value = $data_block[1];
 
-            if ($data_block[2] == 'string') {
-                $value = htmlspecialchars($value);
-            } elseif ($data_block[2] == 'url') {
+            if ($data_block[2] == 'url') {
                 $value = filter_var($value, FILTER_SANITIZE_URL);
+            } else {
+                $value = htmlspecialchars($value);
             }
 
             $prepared_data[$key] = $value;
