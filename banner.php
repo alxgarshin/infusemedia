@@ -11,7 +11,7 @@ $dbConnection = new FunctionsDB();
 
 # Добавляем / пополняем данные в БД: вносим IP, user agent и URL-страницы изображения. Если такие данные уже есть, обновляем дату и увеличиваем счетчик просмотров.
 $dbConnection->execute(
-    $dbConnection->prepare('INSERT INTO
+    'INSERT INTO
     infuse
     (
         ip_address,
@@ -29,12 +29,13 @@ $dbConnection->execute(
         1
     ) ON DUPLICATE KEY UPDATE
         view_date=NOW(),
-        views_count=views_count+1'),
+        views_count=views_count+1',
     [
         ['ip_address', FunctionsUser::getRealIp(), 'string'],
         ['user_agent', FunctionsUser::getUserAgent(), 'string'],
         ['page_url', FunctionsPage::getPage(), 'url']
-    ]);
+    ]
+);
 
 # Выдаем изображение
 $fname = 'spider.webp';
@@ -109,27 +110,17 @@ class FunctionsDB
     }
 
     /**
-     * Подготовка запроса
-     *
-     * @param $query string
-     *
-     * @return PDOStatement|bool
-     */
-    public function prepare(string $query): PDOStatement|bool
-    {
-        return $this->dbConnection->prepare($query);
-    }
-
-    /**
      * Исполнение запроса
      *
-     * @param $statement PDOStatement
+     * @param string $query
      * @param array $data
      *
      * @return bool
      */
-    public function execute(PDOStatement $statement, array $data): bool
+    public function execute(string $query, array $data): bool
     {
+        $stmt = $this->dbConnection->prepare($query);
+
         $prepared_data = [];
         foreach ($data as $data_block) {
             $key = $data_block[0];
@@ -144,7 +135,7 @@ class FunctionsDB
             $prepared_data[$key] = $value;
         }
 
-        return $statement->execute(
+        return $stmt->execute(
             $prepared_data
         );
     }
