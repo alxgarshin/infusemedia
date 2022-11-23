@@ -6,12 +6,12 @@ error_reporting(E_ERROR | E_WARNING | E_PARSE | E_RECOVERABLE_ERROR);
 # Подключаем данные для БД
 include_once("db.php");
 
-# Устанавливаем соединение с MySQL-сервером
-$dbConnection = new PDO('mysql:dbname=' . dbName . ';host=' . dbHost . ';charset=utf8mb4', dbUser, dbPass);
-$dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
-$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+# Устанавливаем соединение с базой данных
+$dbConnection = new FunctionsDB();
 
-$stmt = $dbConnection->prepare('INSERT INTO
+# Добавляем / пополняем данные в БД: вносим IP, user agent и URL-страницы изображения. Если такие данные уже есть, обновляем дату и увеличиваем счетчик просмотров.
+$dbConnection->execute(
+    $dbConnection->prepare('INSERT INTO
     infuse
     (
         ip_address,
@@ -29,12 +29,12 @@ $stmt = $dbConnection->prepare('INSERT INTO
         1
     ) ON DUPLICATE KEY UPDATE
         view_date=NOW(),
-        views_count=views_count+1');
-$stmt->execute([
-    'ip_address' => FunctionsUser::getRealIp(),
-    'user_agent' => FunctionsUser::getUserAgent(),
-    'page_url' => FunctionsPage::getPage()
-]);
+        views_count=views_count+1'),
+    [
+        ['ip_address', FunctionsUser::getRealIp(), 'string'],
+        ['user_agent', FunctionsUser::getUserAgent(), 'string'],
+        ['page_url', FunctionsPage::getPage(), 'url']
+    ]);
 
 # Выдаем изображение
 $fname = 'spider.webp';
@@ -58,7 +58,7 @@ abstract class FunctionsUser
             $user_agent = $_SERVER['HTTP_USER_AGENT'];
         }
 
-        return htmlspecialchars($user_agent);
+        return $user_agent;
     }
 
     /**
@@ -74,7 +74,7 @@ abstract class FunctionsUser
             $ip = $_SERVER['REMOTE_ADDR'];
         }
 
-        return htmlspecialchars($ip);
+        return $ip;
     }
 }
 
@@ -90,6 +90,62 @@ abstract class FunctionsPage
             $page_url = $_SERVER['HTTP_REFERER'];
         }
 
-        return filter_var($page_url, FILTER_SANITIZE_URL);
+        return $page_url;
+    }
+}
+
+class FunctionsDB
+{
+    private PDO $dbConnection;
+
+    /**
+     * Создание соединения
+     */
+    public function __construct()
+    {
+        $this->dbConnection = new PDO(dbType . ':dbname=' . dbName . ';host=' . dbHost . ';port=' . dbPort . ';charset=utf8mb4', dbUser, dbPass);
+        $this->dbConnection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+        $this->dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    }
+
+    /**
+     * Подготовка запроса
+     *
+     * @param $query string
+     *
+     * @return PDOStatement|bool
+     */
+    public function prepare(string $query): PDOStatement|bool
+    {
+        return $this->dbConnection->prepare($query);
+    }
+
+    /**
+     * Исполнение запроса
+     *
+     * @param $statement PDOStatement
+     * @param array $data
+     *
+     * @return bool
+     */
+    public function execute(PDOStatement $statement, array $data): bool
+    {
+        $prepared_data = [];
+        foreach ($data as $data_block) {
+            $key = $data_block[0];
+            $value = $data_block[1];
+
+            if ($data_block[2] == 'string') {
+                $value = htmlspecialchars($value);
+            } elseif ($data_block[2] == 'url') {
+                $value = filter_var($value, FILTER_SANITIZE_URL);
+            }
+
+            $prepared_data[$key] = $value;
+        }
+
+        return $statement->execute(
+            $prepared_data
+        );
     }
 }
