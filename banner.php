@@ -119,8 +119,6 @@ class FunctionsDB
      */
     public function execute(string $query, array $data): bool
     {
-        $stmt = $this->dbConnection->prepare($query);
-
         $prepared_data = [];
         foreach ($data as $data_block) {
             $key = $data_block[0];
@@ -135,7 +133,7 @@ class FunctionsDB
             $prepared_data[$key] = $value;
         }
 
-        return $stmt->execute(
+        return $this->dbConnection->prepare($query)->execute(
             $prepared_data
         );
     }
