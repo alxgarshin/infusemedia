@@ -110,31 +110,49 @@ class FunctionsDB
     }
 
     /**
-     * Исполнение запроса
+     * Подготовка запроса
      *
      * @param string $query
+     *
+     * @return PDOStatement|bool
+     */
+    public function prepare(string $query): PDOStatement|bool
+    {
+        return $this->dbConnection->prepare($query);
+    }
+
+    /**
+     * Исполнение запроса
+     *
+     * @param PDOStatement|bool|string $query
      * @param array $data
      *
      * @return bool
      */
-    public function execute(string $query, array $data): bool
+    public function execute(PDOStatement|bool|string $query, array $data): bool
     {
-        $prepared_data = [];
-        foreach ($data as $data_block) {
-            $key = $data_block[0];
-            $value = $data_block[1];
+        if ($query !== false) {
+            $prepared_data = [];
+            foreach ($data as $data_block) {
+                $key = $data_block[0];
+                $value = $data_block[1];
 
-            if ($data_block[2] == 'url') {
-                $value = filter_var($value, FILTER_SANITIZE_URL);
-            } else {
-                $value = htmlspecialchars($value);
+                if ($data_block[2] == 'url') {
+                    $value = filter_var($value, FILTER_SANITIZE_URL);
+                } else {
+                    $value = htmlspecialchars($value);
+                }
+
+                $prepared_data[$key] = $value;
             }
 
-            $prepared_data[$key] = $value;
-        }
+            $stmt = $query instanceof PDOStatement ? $query : $this->prepare($query);
 
-        return $this->dbConnection->prepare($query)->execute(
-            $prepared_data
-        );
+            return $stmt->execute(
+                $prepared_data
+            );
+        } else {
+            return false;
+        }
     }
 }
